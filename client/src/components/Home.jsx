@@ -9,7 +9,6 @@ import {
   Box,
   Grid,
 } from "@material-ui/core";
-import { withRouter } from "react-router-dom";
 
 //Material-UI Formatting
 const useStyles = makeStyles((theme) => ({
@@ -83,41 +82,48 @@ const useStyles = makeStyles((theme) => ({
       fontSize: "0.6rem",
     },
   },
+  drawerHeader: {
+    display: "flex",
+    alignItems: "center",
+    padding: theme.spacing(0, 1),
+    // necessary for content to be below app bar
+    ...theme.mixins.toolbar,
+    justifyContent: "flex-end",
+  },
 }));
 
 //Main Function
 const Home = (props) => {
-  // const { history } = props;
   const classes = useStyles();
   const { loginWithRedirect, isAuthenticated } = useAuth0();
-  // const clickEvent = () => {
-  //   loginWithRedirect();
-  //   // history.push("/main");
-  // };
   return (
     <div className={classes.root}>
       {/* Displays Appbar for Homepage*/}
-      <AppBar position="static" className={classes.appBar}>
-        <Toolbar className={classes.toolbar}>
-          <Grid item xs={0} md={1} />
-          <Typography component="div" className={classes.headText}>
-            Budget Allocator
-          </Typography>
-          <Button
-            variant="outlined"
-            color="secondary"
-            className={classes.LogInbutton}
-            onClick={() => {
-              console.log("Open LogIn Page");
-            }}
-          >
-            Log In
-          </Button>
-          <Grid item xs={0} md={1} />
-        </Toolbar>
-      </AppBar>
+      {!isAuthenticated && (
+        <AppBar position="static" className={classes.appBar}>
+          <Toolbar className={classes.toolbar}>
+            <Grid item xs={0} md={1} />
+            <Typography component="div" className={classes.headText}>
+              मेरो Ledger
+            </Typography>
+            <Button
+              variant="outlined"
+              color="secondary"
+              className={classes.LogInbutton}
+              onClick={() => {
+                loginWithRedirect();
+              }}
+            >
+              Log In
+            </Button>
+
+            <Grid item xs={0} md={1} />
+          </Toolbar>
+        </AppBar>
+      )}
 
       {/* Displays Hero Image and Content */}
+      {isAuthenticated && <div className={classes.drawerHeader} />}
       <Box className={classes.hero}>
         <Box className={classes.tagline}>Manage Your Expenses</Box>
         <Box className={classes.vp}>Your Solution for Smart Budgeting</Box>
@@ -134,4 +140,4 @@ const Home = (props) => {
   );
 };
 
-export default withRouter(Home);
+export default Home;

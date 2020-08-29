@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   Typography,
   makeStyles,
@@ -7,6 +7,7 @@ import {
   Card,
   CardContent,
 } from "@material-ui/core";
+import { useAuth0 } from "@auth0/auth0-react";
 
 //Material-UI Formatting
 const useStyles = makeStyles((theme) => ({
@@ -73,11 +74,43 @@ const useStyles = makeStyles((theme) => ({
     fontWeight: "bold",
     fontSize: "1.2rem",
   },
+  cardContent: {
+    paddingTop: theme.spacing(5),
+  },
 }));
 
 //Main Function
 const CurrentScreen = () => {
+  const { user, isAuthenticated } = useAuth0();
+  const [userData, setUser] = useState({});
+  const [loanData, setLoan] = useState({});
   const classes = useStyles();
+
+  //Getting Data from Users Section
+  useEffect(() => {
+    async function fetchUserData() {
+      const response1 = await fetch(`http://localhost:3001/users/${user.sub}`);
+      const userData = await response1.json();
+      const [userItem] = userData.main;
+      setUser(userItem);
+    }
+    fetchUserData();
+  });
+
+  //Getting Data from Loans Section
+  useEffect(() => {
+    async function fetchUserData() {
+      const response2 = await fetch(
+        `http://localhost:3001/users/${user.sub}/${userData.month}/loans`
+      );
+      const loanData = await response2.json();
+      const [loanItem] = loanData;
+      setLoan(loanItem);
+    }
+    fetchUserData();
+  });
+
+  const userSaving = userData.monthlyBudget - userData.expectedMonthlyExpenses;
 
   //Date Formatting Options
   const DATE_OPTIONS = {
@@ -86,42 +119,50 @@ const CurrentScreen = () => {
   };
 
   return (
-    <main className={classes.content}>
-      <div className={classes.drawerHeader} />
-      <Box className={classes.content}>
-        <Button variant="outlined" disabled className={classes.dateButton}>
-          <Typography className={classes.date}>
-            {new Date().toLocaleDateString("en-US", DATE_OPTIONS)}
-          </Typography>
-        </Button>
-        <Card className={classes.root} variant="outlined">
-          <CardContent>
-            <Typography className={classes.captionText}>
-              Your Current Status
+    isAuthenticated && (
+      <main className={classes.content}>
+        <div className={classes.drawerHeader} />
+        <Box className={classes.content}>
+          <Button variant="outlined" disabled className={classes.dateButton}>
+            <Typography className={classes.date}>
+              {new Date().toLocaleDateString("en-US", DATE_OPTIONS)}
             </Typography>
-            <Typography className={classes.topContent}>Salary : Rs.</Typography>
-            <Typography className={classes.topContent}>
-              Monthly Expense : Rs.
-            </Typography>
-            <Typography className={classes.topContent}>
-              Savings : Rs.
-            </Typography>
-            <Typography className={classes.topContent}>
-              Money Invested : Rs.
-            </Typography>
-            <Typography className={classes.topContent}>
-              Loan Taken : Rs.
-            </Typography>
-            <Typography className={classes.topContent}>
-              Loan Given : Rs.
-            </Typography>
-            <Typography className={classes.topContent}>
-              Remaining Salary : Rs.
-            </Typography>
-          </CardContent>
-        </Card>
-      </Box>
-    </main>
+          </Button>
+
+          {/* Displays Main Content */}
+          <Card className={classes.root} variant="outlined">
+            <CardContent>
+              <Typography className={classes.captionText}>
+                Your Current Status
+              </Typography>
+              <Box className={classes.cardContent}>
+                <Typography className={classes.topContent}>
+                  Salary : Rs. {userData.monthlyBudget}
+                </Typography>
+                <Typography className={classes.topContent}>
+                  Expected Monthly Expense : Rs.{" "}
+                  {userData.expectedMonthlyExpenses}
+                </Typography>
+                <Typography className={classes.topContent}>
+                  Savings : Rs.
+                  {userSaving}
+                </Typography>
+                <Typography className={classes.topContent}>
+                  Loan Taken : Rs. {loanData.loanTaken}
+                </Typography>
+                <Typography className={classes.topContent}>
+                  Loan Given : Rs. {loanData.loanGiven}
+                </Typography>
+                <Typography className={classes.topContent}>
+                  Remaining Salary : Rs.{" "}
+                  {userSaving - loanData.loanTaken - loanData.loanGiven}
+                </Typography>
+              </Box>
+            </CardContent>
+          </Card>
+        </Box>
+      </main>
+    )
   );
 };
 

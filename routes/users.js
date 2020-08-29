@@ -42,6 +42,13 @@ router.post('/',async (req,res) => {
             expectedMonthlyExpenses,
             expectedMonthlySaving
         });
+        try {
+            const savedUsers = await user.save() 
+            res.json(savedUsers);
+            }catch(err){
+                res.json({message: err});
+            } 
+        
     }else{
         const newUser = new Users({
             id:req.body.id,
@@ -52,18 +59,19 @@ router.post('/',async (req,res) => {
                 expectedMonthlySaving
             }]
         });
+        try {
+            const savedUsers = await newUser.save() 
+            res.json(savedUsers);
+            }catch(err){
+                res.json({message: err});
+            } 
+        
         
     }
 
     // users.update({ id:req.body.id, main[0].monthlyBudget})
     
-    try {
-    const savedUsers = await user.save() 
-    res.json(savedUsers);
-    }catch(err){
-        res.json({message: err});
-    } 
-
+ 
 });
 
 router.put('/:id/:month/expenses',async(req,res)=>{
@@ -102,7 +110,14 @@ router.get('/:id/:month/expenses',async(req,res)=>{
             let monthlyReports=user.main;
             monthlyReports.map(monthlyReport=>{
                 if(monthlyReport.month===req.params.month){
-
+                    let totalExpense=0;
+                    monthlyReport.expenses.map(expense=>{
+                        totalExpense+=expense.actualExpense;
+                    })
+                    monthlyReport.expenses.push({
+                        titleOfExpense:"Total",
+                        actualExpense:totalExpense
+                    });
                     return res.json(monthlyReport.expenses)
                 }
             })

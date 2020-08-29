@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   Typography,
   makeStyles,
@@ -13,6 +13,7 @@ import {
   CardContent,
 } from "@material-ui/core";
 import Async from "react-async";
+import { useAuth0 } from "@auth0/auth0-react";
 
 //Material-UI Formatting
 const useStyles = makeStyles((theme) => ({
@@ -84,12 +85,25 @@ const useStyles = makeStyles((theme) => ({
 
 //Requests data from this API
 const loadContents = () =>
-  fetch("https://supriya090.github.io/InvestJSON/investment.json")
+  fetch(`http://localhost:3001/investments`)
     .then((res) => (res.ok ? res : Promise.reject(res)))
     .then((res) => res.json());
 
 //Main Function
 const InvestScreen = () => {
+  const { user, isAuthenticated } = useAuth0();
+  const [iuser, setUser] = useState({});
+
+  //Getting Data from Users Section
+  useEffect(() => {
+    async function fetchUserData() {
+      const response1 = await fetch(`http://localhost:3001/users/${user.sub}`);
+      const data = await response1.json();
+      const [item] = data.main;
+      setUser(item);
+    }
+    fetchUserData();
+  }, []);
   const classes = useStyles();
 
   //Date Formatting Options
@@ -99,66 +113,70 @@ const InvestScreen = () => {
   };
 
   return (
-    <main className={classes.content}>
-      <div className={classes.drawerHeader} />
-      <Box className={classes.content}>
-        <Box>
-          {/* Displays the top content */}
-          <Typography className={classes.topContent}>
-            Expected Saving for<span> </span>
-            {new Date().toLocaleDateString("en-US", DATE_OPTIONS)} : Rs.
-          </Typography>
-          <Divider className={classes.divider} />
-          <Typography variant="h5" className={classes.title}>
-            Investment Options
-          </Typography>
-          {/* Loads the data from API */}
-          <Async promiseFn={loadContents}>
-            {({ data, err, isLoading }) => {
-              if (isLoading) return "Loading...";
-              if (err) return `Something went wrong: ${err.message}`;
-              /* Displays Card Contents */
+    isAuthenticated && (
+      <main className={classes.content}>
+        <div className={classes.drawerHeader} />
+        <Box className={classes.content}>
+          <Box>
+            {/* Displays the top content */}
+            <Typography className={classes.topContent}>
+              Expected Saving for<span> </span>
+              {new Date().toLocaleDateString("en-US", DATE_OPTIONS)} : Rs.{" "}
+              {iuser && iuser.expectedMonthlySaving}
+            </Typography>
+            <Divider className={classes.divider} />
+            <Typography variant="h5" className={classes.title}>
+              Investment Options
+            </Typography>
 
-              if (data)
-                return (
-                  <Grid container spacing={3}>
-                    {data.map((row) => (
-                      <Grid item xs={12} sm={6}>
-                        <Card className={classes.root}>
-                          <CardActionArea>
-                            <CardMedia
-                              className={classes.media}
-                              image={row.image}
-                              title={row.title}
-                            >
-                              <CardContent className={classes.cardCaption}>
-                                <Typography className={classes.captionText}>
-                                  {row.title}
-                                </Typography>
-                              </CardContent>
-                            </CardMedia>
-                          </CardActionArea>
-                          <CardActions>
-                            <Button
-                              size="small"
-                              color="primary"
-                              className={classes.button}
-                              href={row.link}
-                              target="_blank"
-                            >
-                              View Available Options
-                            </Button>
-                          </CardActions>
-                        </Card>
-                      </Grid>
-                    ))}
-                  </Grid>
-                );
-            }}
-          </Async>
+            {/* Loads the data from API */}
+            <Async promiseFn={loadContents}>
+              {({ data, err, isLoading }) => {
+                if (isLoading) return "Loading...";
+                if (err) return `Something went wrong: ${err.message}`;
+
+                /* Displays Card Contents */
+                if (data)
+                  return (
+                    <Grid container spacing={3}>
+                      {data.map((row) => (
+                        <Grid item xs={12} sm={6}>
+                          <Card className={classes.root}>
+                            <CardActionArea>
+                              <CardMedia
+                                className={classes.media}
+                                image={row.image}
+                                title={row.title}
+                              >
+                                <CardContent className={classes.cardCaption}>
+                                  <Typography className={classes.captionText}>
+                                    {row.title}
+                                  </Typography>
+                                </CardContent>
+                              </CardMedia>
+                            </CardActionArea>
+                            <CardActions>
+                              <Button
+                                size="small"
+                                color="primary"
+                                className={classes.button}
+                                href={row.link}
+                                target="_blank"
+                              >
+                                View Available Options
+                              </Button>
+                            </CardActions>
+                          </Card>
+                        </Grid>
+                      ))}
+                    </Grid>
+                  );
+              }}
+            </Async>
+          </Box>
         </Box>
-      </Box>
-    </main>
+      </main>
+    )
   );
 };
 

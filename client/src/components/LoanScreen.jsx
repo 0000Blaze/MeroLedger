@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Typography,
   makeStyles,
@@ -15,6 +15,7 @@ import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogContentText from "@material-ui/core/DialogContentText";
 import DialogTitle from "@material-ui/core/DialogTitle";
+import { useAuth0 } from "@auth0/auth0-react";
 
 //Material-UI Formatting
 const useStyles = makeStyles((theme) => ({
@@ -56,7 +57,7 @@ const useStyles = makeStyles((theme) => ({
     color: "white",
     backgroundColor: "#E63946",
     "&:hover": {
-      backgroundColor: "#91683f",
+      backgroundColor: "#ED747E",
     },
     [theme.breakpoints.down("md")]: {
       marginLeft: "28%",
@@ -121,16 +122,29 @@ const useStyles = makeStyles((theme) => ({
     [theme.breakpoints.down("xs")]: {
       marginTop: theme.spacing(3),
       marginRight: theme.spacing(3),
-      width: "100%",
+      width: "90%",
     },
   },
 }));
 
 //Main Function
-const LoanScreen = (props) => {
-  const { history } = props;
+const LoanScreen = () => {
+  const { user, isAuthenticated } = useAuth0();
+  const [iuser, setUser] = useState({});
+  const classes = useStyles();
+
+  //Gets data from Users Section
+  useEffect(() => {
+    async function fetchUserData() {
+      const response1 = await fetch(`http://localhost:3001/users/${user.sub}`);
+      const data = await response1.json();
+      const [item] = data.main;
+      setUser(item);
+    }
+    fetchUserData();
+  });
+
   //Sets initial value for amount taken and given
-  //Need a better way
   const [loanTaken, addLoanTaken] = useState("");
   const [loanGiven, addLoanGiven] = useState("");
   const [displayTaken, setAmountTaken] = useState("");
@@ -138,12 +152,25 @@ const LoanScreen = (props) => {
 
   //Displays the amount
   function callSetTaken() {
+    fetchData();
     setAmountTaken(loanTaken);
+    handleClose();
   }
   function callSetGiven() {
     setAmountGiven(loanGiven);
   }
-  const classes = useStyles();
+
+  //Puts Data to tha Loan Section
+  const fetchData = () => {
+    fetch(`http://localhost:3001/users/${user.sub}/Jul/loans`, {
+      method: "put",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        loanGiven: loanGiven,
+        loanTaken: loanTaken,
+      }),
+    });
+  };
 
   //Handles the Dialog Box
   const [open, setOpen] = React.useState(false);
@@ -154,11 +181,6 @@ const LoanScreen = (props) => {
     setOpen(false);
   };
 
-  const clickEvent = () => {
-    handleClickOpen();
-    callSetTaken();
-  };
-
   //Date Formatting Options
   const DATE_OPTIONS = {
     year: "numeric",
@@ -166,132 +188,133 @@ const LoanScreen = (props) => {
   };
 
   return (
-    <main className={classes.content}>
-      <div className={classes.drawerHeader} />
-      <Box className={classes.content}>
-        <Box className={classes.mainBox}>
-          {/* Displays the top content */}
-          <Typography className={classes.topContent}>
-            Salary for<span> </span>
-            {new Date().toLocaleDateString("en-US", DATE_OPTIONS)} : Rs.
-          </Typography>
-          <Typography className={classes.topContent}>
-            Money Remaining for<span> </span>
-            {new Date().toLocaleDateString("en-US", DATE_OPTIONS)} : Rs.
-          </Typography>
-          <Typography className={classes.topContent}>
-            Loan Taken in<span> </span>
-            {new Date().toLocaleDateString("en-US", DATE_OPTIONS)} : Rs.{" "}
-            {displayTaken}
-          </Typography>
-          <Typography className={classes.topContent}>
-            Loan Given in<span> </span>
-            {new Date().toLocaleDateString("en-US", DATE_OPTIONS)} : Rs.{" "}
-            {displayGiven}
-          </Typography>
-          <Divider className={classes.divider} />
+    isAuthenticated && (
+      <main className={classes.content}>
+        <div className={classes.drawerHeader} />
+        <Box className={classes.content}>
+          <Box className={classes.mainBox}>
+            {/* Displays the top content */}
+            <Typography className={classes.topContent}>
+              Salary for<span> </span>
+              {new Date().toLocaleDateString("en-US", DATE_OPTIONS)} : Rs.{" "}
+              {iuser.monthlyBudget}
+            </Typography>
+            <Typography className={classes.topContent}>
+              Money Remaining for<span> </span>
+              {new Date().toLocaleDateString("en-US", DATE_OPTIONS)} : Rs.{" "}
+              {iuser.monthlyBudget - iuser.expectedMonthlyExpenses}
+            </Typography>
+            <Typography className={classes.topContent}>
+              Loan Given in<span> </span>
+              {new Date().toLocaleDateString("en-US", DATE_OPTIONS)} : Rs.{" "}
+              {displayGiven}
+            </Typography>
+            <Typography className={classes.topContent}>
+              Loan Taken in<span> </span>
+              {new Date().toLocaleDateString("en-US", DATE_OPTIONS)} : Rs.{" "}
+              {displayTaken}
+            </Typography>
+            <Divider className={classes.divider} />
 
-          {/* Displays Loan Given Card Contents */}
-          <Card className={classes.root} variant="outlined">
-            <CardContent>
-              <Typography className={classes.captionText}>
-                Loan Given
-              </Typography>
-              <Typography className={classes.mainContent}>
-                AMOUNT :
-                <TextField
-                  label="Amount"
-                  id="outlined-start-adornment"
-                  type="number"
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">Rs. </InputAdornment>
-                    ),
-                  }}
-                  variant="outlined"
-                  value={loanGiven}
-                  onChange={(e) => addLoanGiven(+e.target.value)}
-                  className={classes.contentBox}
-                />
-              </Typography>
-              <Button
-                variant="contained"
-                color="primary"
-                className={classes.saveButton}
-                onClick={callSetGiven}
-              >
-                Save
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Displays Loan Taken Card Contents */}
-          <Card className={classes.root} variant="outlined">
-            <CardContent>
-              <Typography className={classes.captionText}>
-                Loan Taken
-              </Typography>
-              <Typography className={classes.mainContent}>
-                AMOUNT :
-                <TextField
-                  label="Amount"
-                  id="outlined-start-adornment"
-                  type="number"
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">Rs. </InputAdornment>
-                    ),
-                  }}
-                  variant="outlined"
-                  value={loanTaken}
-                  onChange={(e) => {
-                    addLoanTaken(+e.target.value);
-                  }}
-                  className={classes.contentBox}
-                />
-              </Typography>
-              <Button
-                variant="contained"
-                color="primary"
-                className={classes.saveButton}
-                onClick={clickEvent}
-              >
-                Save
-              </Button>
-              {/* Alert Dialog Box */}
-              <Dialog
-                open={open}
-                onClose={handleClose}
-                aria-labelledby="alert-dialog-title"
-                aria-describedby="alert-dialog-description"
-              >
-                <DialogTitle id="alert-dialog-title">
-                  {"Check Savings"}
-                </DialogTitle>
-                <DialogContent>
-                  <DialogContentText id="alert-dialog-description">
-                    Check your savings before taking a loan
-                  </DialogContentText>
-                </DialogContent>
-                <DialogActions>
-                  <Button
-                    color="primary"
-                    onClick={() => {
-                      history.push("/savings");
+            {/* Displays Loan Given Card Contents */}
+            <Card className={classes.root} variant="outlined">
+              <CardContent>
+                <Typography className={classes.captionText}>
+                  Loan Given
+                </Typography>
+                <Typography className={classes.mainContent}>
+                  AMOUNT :
+                  <TextField
+                    label="Amount"
+                    id="outlined-start-adornment"
+                    type="number"
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">Rs. </InputAdornment>
+                      ),
                     }}
-                  >
-                    Go To Savings
-                  </Button>
-                  <Button onClick={handleClose} color="primary" autoFocus>
-                    Cancel
-                  </Button>
-                </DialogActions>
-              </Dialog>
-            </CardContent>
-          </Card>
+                    variant="outlined"
+                    value={loanGiven}
+                    onChange={(e) => addLoanGiven(+e.target.value)}
+                    className={classes.contentBox}
+                  />
+                </Typography>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  className={classes.saveButton}
+                  onClick={callSetGiven}
+                >
+                  Save
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Displays Loan Taken Card Contents */}
+            <Card className={classes.root} variant="outlined">
+              <CardContent>
+                <Typography className={classes.captionText}>
+                  Loan Taken
+                </Typography>
+                <Typography className={classes.mainContent}>
+                  AMOUNT :
+                  <TextField
+                    label="Amount"
+                    id="outlined-start-adornment"
+                    type="number"
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">Rs. </InputAdornment>
+                      ),
+                    }}
+                    variant="outlined"
+                    value={loanTaken}
+                    onChange={(e) => {
+                      addLoanTaken(+e.target.value);
+                    }}
+                    className={classes.contentBox}
+                  />
+                </Typography>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  className={classes.saveButton}
+                  onClick={handleClickOpen}
+                >
+                  Save
+                </Button>
+
+                {/* Alert Dialog Box */}
+                <Dialog
+                  open={open}
+                  onClose={handleClose}
+                  aria-labelledby="alert-dialog-title"
+                  aria-describedby="alert-dialog-description"
+                >
+                  <DialogTitle id="alert-dialog-title">
+                    {"Check Savings"}
+                  </DialogTitle>
+                  <DialogContent>
+                    <DialogContentText id="alert-dialog-description">
+                      You have {iuser.expectedMonthlySaving} in savings. Check
+                      your savings before taking a loan
+                    </DialogContentText>
+                  </DialogContent>
+                  <DialogActions>
+                    <Button onClick={callSetTaken} color="primary" autoFocus>
+                      Take Loan Anyway
+                    </Button>
+                    <Button onClick={handleClose} color="primary" autoFocus>
+                      Cancel
+                    </Button>
+                  </DialogActions>
+                </Dialog>
+              </CardContent>
+            </Card>
+          </Box>
         </Box>
-      </Box>
-    </main>
+      </main>
+    )
   );
 };
 

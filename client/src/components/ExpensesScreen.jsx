@@ -19,6 +19,7 @@ import {
   CardContent,
 } from "@material-ui/core";
 import Async from "react-async";
+import { useAuth0 } from "@auth0/auth0-react";
 
 //Styles the Table
 const StyledTableCell = withStyles((theme) => ({
@@ -81,7 +82,7 @@ const useStyles = makeStyles((theme) => ({
     color: "white",
     backgroundColor: "#E63946",
     "&:hover": {
-      backgroundColor: "#91683f",
+      backgroundColor: "#ED747E",
     },
     [theme.breakpoints.down("md")]: {
       marginLeft: "28%",
@@ -154,12 +155,14 @@ const useStyles = makeStyles((theme) => ({
 
 //Main Function
 const ExpenseScreen = () => {
-  const [user, setUser] = useState({});
+  const { user, isAuthenticated } = useAuth0();
+  const [iuser, setUser] = useState({});
   const classes = useStyles();
 
+  //Getting data from Users section
   useEffect(() => {
     async function fetchUserData() {
-      const response1 = await fetch("http://localhost:3001/users/3");
+      const response1 = await fetch(`http://localhost:3001/users/${user.sub}`);
       const data = await response1.json();
       const [item] = data.main;
       setUser(item);
@@ -167,13 +170,15 @@ const ExpenseScreen = () => {
     fetchUserData();
   }, []);
 
+  //Getting data from Expenses Section
   const loadContents = () =>
-    fetch("http://localhost:3001/users/4/Aug/expenses")
+    fetch(`http://localhost:3001/users/${user.sub}/${iuser.month}/expenses`)
       .then((res) => (res.ok ? res : Promise.reject(res)))
       .then((res) => res.json());
 
+  //Putting data in Expenses Section
   const fetchData = () => {
-    fetch("http://localhost:3001/users/4/Aug/expenses", {
+    fetch(`http://localhost:3001/users/${user.sub}/${iuser.month}/expenses`, {
       method: "put",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -182,6 +187,7 @@ const ExpenseScreen = () => {
       }),
     });
   };
+
   //Sets values for expenses
   const [values, setValues] = React.useState({
     titleOfExpense: "",
@@ -198,108 +204,108 @@ const ExpenseScreen = () => {
   };
 
   return (
-    <main className={classes.content}>
-      <div className={classes.drawerHeader} />
+    isAuthenticated && (
+      <main className={classes.content}>
+        <div className={classes.drawerHeader} />
 
-      {/* Displays Topmost Content */}
-      <Box className={classes.content}>
-        <Box className={classes.mainBox}>
-          <Typography className={classes.topContent}>
-            Expected Expense for<span> </span>
-            {new Date().toLocaleDateString("en-US", DATE_OPTIONS)} : Rs.{" "}
-            {user && user.monthlyBudget}
-          </Typography>
+        {/* Displays Topmost Content */}
+        <Box className={classes.content}>
+          <Box className={classes.mainBox}>
+            <Typography className={classes.topContent}>
+              Expected Expense for<span> </span>
+              {new Date().toLocaleDateString("en-US", DATE_OPTIONS)} : Rs.{" "}
+              {iuser && iuser.expectedMonthlyExpenses}
+            </Typography>
+            <Divider className={classes.divider} />
 
-          <Typography className={classes.topContent}>
-            Actual Expense for<span> </span>
-            {new Date().toLocaleDateString("en-US", DATE_OPTIONS)} : Rs. {}
-          </Typography>
-          <Divider className={classes.divider} />
+            {/* Displays Table Contents: Head and Body */}
+            <TableContainer component={Paper}>
+              <Table className={classes.table} aria-label="customized table">
+                <TableHead>
+                  <TableRow>
+                    <StyledTableCell>Title</StyledTableCell>
+                    <StyledTableCell align="right">
+                      Amount&nbsp;(Rs.)
+                    </StyledTableCell>
+                  </TableRow>
+                </TableHead>
+                <Async promiseFn={loadContents}>
+                  {({ data, err, isLoading }) => {
+                    if (isLoading) return "Loading...";
+                    if (err) return `Something went wrong: ${err.message}`;
 
-          {/* Displays Table Contents */}
-          <TableContainer component={Paper}>
-            <Table className={classes.table} aria-label="customized table">
-              <TableHead>
-                <TableRow>
-                  <StyledTableCell>Title</StyledTableCell>
-                  <StyledTableCell align="right">
-                    Amount&nbsp;(Rs.)
-                  </StyledTableCell>
-                </TableRow>
-              </TableHead>
-              <Async promiseFn={loadContents}>
-                {({ data, err, isLoading }) => {
-                  if (isLoading) return "Loading...";
-                  if (err) return `Something went wrong: ${err.message}`;
-
-                  /* Displays Table Contents */
-                  if (data)
-                    return (
-                      <TableBody>
-                        {data.map((row) => (
-                          <StyledTableRow key={row.titleOfExpense}>
-                            <StyledTableCell component="th" scope="row">
-                              {row.titleOfExpense}
-                            </StyledTableCell>
-                            <StyledTableCell align="right">
-                              {row.amountSpent}
-                            </StyledTableCell>
-                          </StyledTableRow>
-                        ))}
-                      </TableBody>
-                    );
-                }}
-              </Async>
-            </Table>
-          </TableContainer>
-
-          {/* Displays Card Contents */}
-          <Card className={classes.root} variant="outlined">
-            <CardContent>
-              <Typography className={classes.captionText}>
-                Add Expenses
-              </Typography>
-              <Typography className={classes.mainContent}>
-                TITLE :
-                <TextField
-                  label="Expense Title"
-                  id="outlined-start-adornment"
-                  variant="outlined"
-                  className={classes.contentBox}
-                  value={values.titleOfExpense}
-                  onChange={handleChange("titleOfExpense")}
-                />
-              </Typography>
-              <Typography className={classes.mainContent}>
-                AMOUNT :
-                <TextField
-                  label="Amount"
-                  id="outlined-start-adornment"
-                  type="number"
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">Rs. </InputAdornment>
-                    ),
+                    /* Displays Table Contents: Body */
+                    if (data) {
+                      return (
+                        <TableBody>
+                          {data.map((row) => (
+                            <StyledTableRow key={row.titleOfExpense}>
+                              <StyledTableCell component="th" scope="row">
+                                {row.titleOfExpense}
+                              </StyledTableCell>
+                              <StyledTableCell align="right">
+                                {row.titleOfExpense === "Total"
+                                  ? row.actualExpense
+                                  : row.amountSpent}
+                              </StyledTableCell>
+                            </StyledTableRow>
+                          ))}
+                        </TableBody>
+                      );
+                    }
                   }}
-                  variant="outlined"
-                  value={values.amountSpent}
-                  onChange={handleChange("amountSpent")}
-                  className={classes.contentBox}
-                />
-              </Typography>
-              <Button
-                variant="contained"
-                color="primary"
-                className={classes.saveButton}
-                onClick={fetchData}
-              >
-                Save
-              </Button>
-            </CardContent>
-          </Card>
+                </Async>
+              </Table>
+            </TableContainer>
+
+            {/* Displays Card Contents */}
+            <Card className={classes.root} variant="outlined">
+              <CardContent>
+                <Typography className={classes.captionText}>
+                  Add Expenses
+                </Typography>
+                <Typography className={classes.mainContent}>
+                  TITLE :
+                  <TextField
+                    label="Expense Title"
+                    id="outlined-start-adornment"
+                    variant="outlined"
+                    className={classes.contentBox}
+                    value={values.titleOfExpense}
+                    onChange={handleChange("titleOfExpense")}
+                  />
+                </Typography>
+                <Typography className={classes.mainContent}>
+                  AMOUNT :
+                  <TextField
+                    label="Amount"
+                    id="outlined-start-adornment"
+                    type="number"
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">Rs. </InputAdornment>
+                      ),
+                    }}
+                    variant="outlined"
+                    value={values.amountSpent}
+                    onChange={handleChange("amountSpent")}
+                    className={classes.contentBox}
+                  />
+                </Typography>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  className={classes.saveButton}
+                  onClick={fetchData}
+                >
+                  Save
+                </Button>
+              </CardContent>
+            </Card>
+          </Box>
         </Box>
-      </Box>
-    </main>
+      </main>
+    )
   );
 };
 

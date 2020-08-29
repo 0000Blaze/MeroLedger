@@ -4,7 +4,6 @@ import Menu from "./components/Menu";
 import { Route, Switch, BrowserRouter } from "react-router-dom";
 import MainScreen from "./components/MainScreen";
 import ExpenseScreen from "./components/ExpensesScreen";
-import SavingsScreen from "./components/SavingsScreen";
 import InvestScreen from "./components/InvestScreen";
 import LoanScreen from "./components/LoanScreen";
 import CurrentScreen from "./components/CurrentScreen";
@@ -14,7 +13,6 @@ const App = (props) => {
   const { route } = props;
   return (
     <BrowserRouter>
-      {/* <Home /> */}
       {route === "/" ? <Home /> : <Menu />}
       <Switch>
         <Route exact path="/menu" render={(props) => <Menu {...props} />} />
@@ -28,11 +26,6 @@ const App = (props) => {
           exact
           path="/expense"
           render={(props) => <ExpenseScreen {...props} />}
-        />
-        <Route
-          exact
-          path="/savings"
-          render={(props) => <SavingsScreen {...props} />}
         />
         <Route
           exact

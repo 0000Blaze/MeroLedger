@@ -82,10 +82,10 @@ const useStyles = makeStyles((theme) => ({
     marginTop: -15,
     marginBottom: 50,
     fontWeight: "bold",
-    backgroundColor: "#5e3003",
+    backgroundColor: "#E63946",
     color: "white",
     "&:hover": {
-      backgroundColor: "#91683f",
+      backgroundColor: "#ED747E",
     },
   },
 }));
@@ -93,7 +93,8 @@ const useStyles = makeStyles((theme) => ({
 //Main Function
 const MainScreen = () => {
   const classes = useStyles();
-  const { user, isAuthenticated, logout } = useAuth0();
+  const { user, isAuthenticated } = useAuth0();
+
   //Date Formatting Options
   const DATE_OPTIONS = {
     weekday: "short",
@@ -109,13 +110,15 @@ const MainScreen = () => {
     monthlyBudget - expectedMonthlyExpense
   );
 
+  //
   const fetchData = () => {
+    console.log(user.sub);
     fetch("http://localhost:3001/users", {
       method: "post",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        id: "4",
-        month: "Aug",
+        id: user.sub,
+        month: "Jul",
         monthlyBudget: monthlyBudget,
         expectedMonthlyExpenses: expectedMonthlyExpense,
       }),
@@ -128,87 +131,80 @@ const MainScreen = () => {
   }
 
   function clickEvents() {
-    fetchData();
+    isAuthenticated && fetchData();
+
     calculateSaving();
   }
 
   return (
-    <main className={classes.content}>
-      <div className={classes.drawerHeader} />
+    isAuthenticated && (
+      <main className={classes.content}>
+        <div className={classes.drawerHeader} />
 
-      {/* Keeps main content away from Menu Drawer */}
-      <Box className={classes.content}>
-        <Button variant="outlined" disabled className={classes.dateButton}>
-          <Typography className={classes.date}>
-            {new Date().toLocaleDateString("en-US", DATE_OPTIONS)}
-          </Typography>
-        </Button>
-
-        {/* Displays the TextFields */}
-        <Box className={classes.mainBox}>
-          <Typography className={classes.mainContent}>
-            YOUR MONTHLY SALARY :
-            <TextField
-              label="Total Salary"
-              id="outlined-start-adornment"
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">Rs. </InputAdornment>
-                ),
-              }}
-              variant="outlined"
-              type="number"
-              value={monthlyBudget}
-              onChange={(e) => setSalary(+e.target.value)}
-              className={classes.contentBox}
-            />
-          </Typography>
-
-          <Typography className={classes.mainContent}>
-            EXPECTED MONTHLY EXPENSE :
-            <TextField
-              id="outlined-start-adornment"
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">Rs. </InputAdornment>
-                ),
-              }}
-              label="Expected Expense"
-              variant="outlined"
-              type="number"
-              value={expectedMonthlyExpense}
-              onChange={(e) => {
-                setExpense(+e.target.value);
-              }}
-              className={classes.contentBox}
-            />
-          </Typography>
-
-          <Button
-            variant="contained"
-            onClick={clickEvents}
-            className={classes.saveButton}
-          >
-            Save
+        {/* Keeps main content away from Menu Drawer */}
+        <Box className={classes.content}>
+          <Button variant="outlined" disabled className={classes.dateButton}>
+            <Typography className={classes.date}>
+              {new Date().toLocaleDateString("en-US", DATE_OPTIONS)}
+            </Typography>
           </Button>
 
-          {/* Displays the calculated saving */}
-          <Typography className={classes.mainContent}>
-            EXPECTED SAVINGS : Rs. {expectedMonthlySaving}
-          </Typography>
+          {/* Displays the TextFields */}
+          <Box className={classes.mainBox}>
+            <Typography className={classes.mainContent}>
+              YOUR MONTHLY SALARY :
+              <TextField
+                label="Total Salary"
+                id="outlined-start-adornment"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">Rs. </InputAdornment>
+                  ),
+                }}
+                variant="outlined"
+                type="number"
+                value={monthlyBudget}
+                onChange={(e) => setSalary(+e.target.value)}
+                className={classes.contentBox}
+              />
+            </Typography>
 
-          {isAuthenticated && (
+            <Typography className={classes.mainContent}>
+              EXPECTED MONTHLY EXPENSE :
+              <TextField
+                id="outlined-start-adornment"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">Rs. </InputAdornment>
+                  ),
+                }}
+                label="Expected Expense"
+                variant="outlined"
+                type="number"
+                value={expectedMonthlyExpense}
+                onChange={(e) => {
+                  setExpense(+e.target.value);
+                }}
+                className={classes.contentBox}
+              />
+            </Typography>
+
             <Button
               variant="contained"
-              onClick={() => logout()}
+              onClick={clickEvents}
               className={classes.saveButton}
             >
-              Log Out
+              Save
             </Button>
-          )}
+
+            {/* Displays the calculated saving */}
+            <Typography className={classes.mainContent}>
+              EXPECTED SAVINGS : Rs. {expectedMonthlySaving}
+            </Typography>
+          </Box>
         </Box>
-      </Box>
-    </main>
+      </main>
+    )
   );
 };
 

@@ -12,12 +12,10 @@ app.use(cors());
 
 //Import Routes
 const usersRoute = require('./routes/users');
-const mainRoute = require('./routes/main');
-const loansRoute = require('./routes/loans');
+const investmentsRoute = require('./routes/investment');
 
 app.use('/users',usersRoute);
-app.use('/main', mainRoute);
-app.use('/loans',loansRoute);
+app.use('/investments',investmentsRoute);
 
 //ROUTES
 app.get('/',(req,res)=>{

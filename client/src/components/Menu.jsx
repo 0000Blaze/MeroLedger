@@ -24,6 +24,7 @@ import {
   ListItemText,
 } from "@material-ui/core";
 import AccountCircle from "@material-ui/icons/AccountCircle";
+import { useAuth0 } from "@auth0/auth0-react";
 import { withRouter } from "react-router-dom";
 
 const drawerWidth = 240;
@@ -70,7 +71,7 @@ const useStyles = makeStyles((theme) => ({
   },
   accountText: {
     marginLeft: 10,
-    marginRight: 10,
+    marginRight: 5,
     [theme.breakpoints.down("xs")]: {
       fontSize: 0,
       marginRight: 0,
@@ -102,10 +103,18 @@ const useStyles = makeStyles((theme) => ({
     fontWeight: "bold",
     textAlign: "center",
   },
+  logoutButton: {
+    marginRight: 10,
+    fontWeight: "bold",
+    [theme.breakpoints.down("xs")]: {
+      fontSize: "0.6rem",
+    },
+  },
 }));
 
 //Main Function
 const Menu = (props) => {
+  const { user, isAuthenticated, logout } = useAuth0();
   const { history } = props;
   const classes = useStyles();
   const theme = useTheme();
@@ -128,11 +137,6 @@ const Menu = (props) => {
       onClick: () => history.push("/expense"),
     },
     {
-      text: "Savings",
-      icon: <FavoriteRoundedIcon />,
-      onClick: () => history.push("/savings"),
-    },
-    {
       text: "Possible Investments",
       icon: <HomeWorkRoundedIcon />,
       onClick: () => history.push("/invest"),
@@ -148,7 +152,7 @@ const Menu = (props) => {
   const statusItemlist = [
     {
       text: "Current Status",
-      icon: <AccountBalanceWalletRoundedIcon />,
+      icon: <FavoriteRoundedIcon />,
       onClick: () => history.push("/current"),
     },
     {
@@ -159,104 +163,120 @@ const Menu = (props) => {
   ];
 
   return (
-    <div className={classes.root}>
-      {/* Displays Appbar for Menu */}
-      <AppBar
-        position="fixed"
-        className={clsx(classes.appBar, {
-          [classes.appBarShift]: open,
-        })}
-      >
-        <Toolbar>
-          <Grid item xs={0} md={1} />
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            onClick={handleDrawerOpen}
-            edge="start"
-            className={clsx(classes.menuButton, open && classes.hide)}
-          >
-            <MenuIcon />
-          </IconButton>
-          <Typography component="div" className={classes.headText}>
-            Budget Allocator
-          </Typography>
-
-          {/* Displays User Button */}
-          <Button
-            className={classes.avatarButton}
-            onClick={() => {
-              history.push("/main");
-            }}
-          >
-            <AccountCircle />
-            <Typography className={classes.accountText} align="right">
-              User
+    isAuthenticated && (
+      <div className={classes.root}>
+        {/* Displays Appbar for Menu */}
+        <AppBar
+          position="fixed"
+          className={clsx(classes.appBar, {
+            [classes.appBarShift]: open,
+          })}
+        >
+          <Toolbar>
+            <Grid item xs={0} md={1} />
+            <IconButton
+              color="inherit"
+              aria-label="open drawer"
+              onClick={handleDrawerOpen}
+              edge="start"
+              className={clsx(classes.menuButton, open && classes.hide)}
+            >
+              <MenuIcon />
+            </IconButton>
+            <Typography component="div" className={classes.headText}>
+              मेरो Ledger
             </Typography>
-          </Button>
-          <Grid item xs={0} md={1} />
-        </Toolbar>
-      </AppBar>
 
-      {/* Displays Menu Drawer */}
-      <Drawer
-        className={classes.drawer}
-        variant="persistent"
-        anchor="left"
-        open={open}
-        classes={{
-          paper: classes.drawerPaper,
-        }}
-      >
-        <div className={classes.drawerHeader}>
-          <Typography className={classes.drawerText}>
-            Supriya's Budgeting
-          </Typography>
-          <IconButton onClick={handleDrawerClose}>
-            {theme.direction === "ltr" ? (
-              <ChevronLeftIcon />
-            ) : (
-              <ChevronRightIcon />
-            )}
-          </IconButton>
-        </div>
-        <Divider />
-        <List>
-          {Itemlist.map((item, index) => {
-            const { text, icon, onClick } = item;
-            return (
-              <ListItem
-                button
-                key={text}
-                onClick={onClick}
-                className={classes.menuItem}
-              >
-                {icon && <ListItemIcon> {icon}</ListItemIcon>}
-                <ListItemText primary={text} />
-              </ListItem>
-            );
-          })}
-        </List>
-        <Divider />
-        <List>
-          {statusItemlist.map((item) => {
-            const { text, icon, onClick } = item;
-            return (
-              <ListItem
-                button
-                key={text}
-                onClick={onClick}
-                className={classes.menuItem}
-              >
-                {icon && <ListItemIcon> {icon}</ListItemIcon>}
-                <ListItemText primary={text} />
-              </ListItem>
-            );
-          })}
-        </List>
-        <Divider />
-      </Drawer>
-    </div>
+            {/* Displays User Button */}
+            <Button
+              className={classes.avatarButton}
+              onClick={() => {
+                history.push("/main");
+              }}
+            >
+              <AccountCircle />
+              <Typography className={classes.accountText} align="right">
+                {user.given_name}
+              </Typography>
+            </Button>
+
+            {/* Displays Logout Button */}
+            <Button
+              className={classes.logoutButton}
+              variant="outlined"
+              color="secondary"
+              onClick={() => logout()}
+            >
+              Log Out
+            </Button>
+            <Grid item xs={0} md={1} />
+          </Toolbar>
+        </AppBar>
+
+        {/* Displays Menu Drawer */}
+        <Drawer
+          className={classes.drawer}
+          variant="persistent"
+          anchor="left"
+          open={open}
+          classes={{
+            paper: classes.drawerPaper,
+          }}
+        >
+          <div className={classes.drawerHeader}>
+            <Typography className={classes.drawerText}>
+              {user.given_name}'s Budgeting
+            </Typography>
+            <IconButton onClick={handleDrawerClose}>
+              {theme.direction === "ltr" ? (
+                <ChevronLeftIcon />
+              ) : (
+                <ChevronRightIcon />
+              )}
+            </IconButton>
+          </div>
+          <Divider />
+
+          {/* Displays List 1 */}
+          <List>
+            {Itemlist.map((item, index) => {
+              const { text, icon, onClick } = item;
+              return (
+                <ListItem
+                  button
+                  key={text}
+                  onClick={onClick}
+                  className={classes.menuItem}
+                >
+                  {icon && <ListItemIcon> {icon}</ListItemIcon>}
+                  <ListItemText primary={text} />
+                </ListItem>
+              );
+            })}
+          </List>
+          <Divider />
+
+          {/* Displays List 2 */}
+          <List>
+            {statusItemlist.map((item) => {
+              const { text, icon, onClick } = item;
+              return (
+                <ListItem
+                  button
+                  key={text}
+                  onClick={onClick}
+                  className={classes.menuItem}
+                >
+                  {icon && <ListItemIcon> {icon}</ListItemIcon>}
+                  <ListItemText primary={text} />
+                </ListItem>
+              );
+            })}
+          </List>
+          <Divider />
+        </Drawer>
+      </div>
+    )
   );
 };
 
